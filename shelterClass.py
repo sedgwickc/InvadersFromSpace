@@ -7,6 +7,7 @@ class ShelterSprite( pygame.sprite.Sprite ):
 
     START_Y = 500
     START_X = 100
+    HEALTH = 100
 
     def __init__( self, start_x, start_y):
         pygame.sprite.Sprite.__init__(self)
@@ -18,7 +19,8 @@ class ShelterSprite( pygame.sprite.Sprite ):
         self.rect.y = start_y
         self.START_Y = start_y
 
-    def update(self, new_x):
+    def update(self, damage):
         self.rect = self.image.get_rect()
-        self.rect.x = new_x
+        self.rect.x = self.START_X
         self.rect.y = self.START_Y
+        self.HEALTH -= damage
