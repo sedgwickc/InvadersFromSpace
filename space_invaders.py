@@ -33,6 +33,9 @@ INV_MAX = 55
 # turrent variables
 TURR_X = 400
 TURR_Y = 550
+TURR_RIGHT = 1
+TURR_NULL = 0
+TURR_LEFT = -1
 
 # bunker variables
 SHELT_NUM = 4
@@ -48,9 +51,6 @@ GREEN = ( 0, 255, 0 )
 BLUE = ( 0, 0, 255 )
 
 NO_COLLISION = -1
-
-# width of the turret image
-TURR_WIDTH = 64
 
 # event definitions
 USEREVENT_INV_DOWN = USEREVENT + 1
@@ -104,7 +104,7 @@ moveInv = False
 
 # create turret sprite
 turret_grp = pygame.sprite.Group()
-turret = turretClass.TurretSprite(TURR_X, TURR_Y)
+turret = turretClass.TurretSprite( (TURR_X, TURR_Y), (WIN_X, WIN_Y) )
 turret_grp.add( turret )
 turr_pos = TURR_X
 moveRight = False
@@ -126,20 +126,27 @@ mothership = False
 pygame.time.set_timer( USEREVENT_INV_DOWN, 1000 )
 pygame.time.set_timer( USEREVENT_MOTHERSHIP, random.randint(5000, 10000) )
 
-game_over = False
 player_score = 0
+turr_dir = TURR_NULL
 
 # run the game loop
 while True:
     
     inv_y = INV_LEFT
 
+    # add abstraction of multiple games
+    # create game over function 
+    # if all shelters destroyed then user is told game is over and script exits
     if len( shelters ) == 0:
-        basicFont = pygame.font.SysFont( None, 35 )
-        text = basicFont.render( 'GAME OVER', True, WHITE, BLACK )
-        textRect = text.get_rect()
-        textRect.topleft = windowSurface.get_rect().midtop
-        game_over = True
+        basicFont = pygame.font.SysFont( None, 55 )
+        text_go = basicFont.render( 'GAME OVER', True, RED, BLACK )
+        text_goRect = text_go.get_rect()
+        text_goRect.center = windowSurface.get_rect().center
+        windowSurface.blit( text_go, text_goRect )
+        pygame.display.update()
+        time.sleep(5)
+        pygame.quit()
+        sys.exit()
     
     # handle events
     for event in pygame.event.get():
@@ -148,35 +155,28 @@ while True:
             sys.exit()
         if event.type == KEYDOWN:
             if event.key == K_RIGHT:
-                moveRight = True
-                moveLeft = False
+                turr_dir = TURR_RIGHT
             if event.key == K_LEFT:
-                moveRight = False
-                moveLeft = True
+                turr_dir = TURR_LEFT
             if event.key == K_SPACE:
                 t_bull = bulletClass.BulletSprite( turret.rect.midtop[0], TURR_Y )
                 t_bullGrp.add( t_bull )
         if event.type == KEYUP:
-            if event.key == K_RIGHT:
-                moveRight = False
-            if event.key == K_LEFT:
-                moveLeft = False
+            if event.key == K_RIGHT and turr_dir != TURR_LEFT:
+                turr_dir = TURR_NULL
+            if event.key == K_LEFT and turr_dir != TURR_RIGHT:
+                turr_dir = TURR_NULL
         if event.type == USEREVENT_INV_DOWN:
             moveInv = True
         if event.type == USEREVENT_MOTHERSHIP:
             mothership = True
     
-    if moveLeft and turr_pos > 0:
-        turr_pos -= 2
-        turret_grp.update( turr_pos )
-    if moveRight and turr_pos < WIN_X - TURR_WIDTH:
-        turr_pos += 2
-        turret_grp.update( turr_pos )
-    
+    turret_grp.update( turr_dir )
+
     if moveInv == True: 
         for inv_spr in iter( invaders ):
             inv_spr.rect.y += 5
-        moveInv = False
+        moveInv = False 
 
     if mothership == True and len( mothership_grp ) > 0:
         mother_pos += 1
@@ -187,8 +187,8 @@ while True:
 
     # randomly select an invader index and have that invader fire
 
-    # if there were bullets on screen in last frame and 150ms has gone by then 
-    # either remove the bullets that have left the screen and update the others
+    # if there were bullets on screen in last frame by then remove the bullets
+    # that have left the screen and call the update method of the others
     shelt_list = shelters.sprites()
     inv_list = invaders.sprites()
     mthr_list = mothership_grp.sprites()
@@ -215,10 +215,6 @@ while True:
                     shelters.remove( shelt_list[idx] )
         t_bullGrp.update()
         
-    # check if bullet is still on screen and hasnt collided with anything
-    # if true then draw else 
-    # if collided with an invader damage/destroy it and update score
-
     # draw frame
     windowSurface.fill( BLACK )
     windowSurface.blit( text_lives, text_livesRect )
@@ -234,4 +230,3 @@ while True:
     time.sleep( frameDelay )
     # refresh display with new frame
     pygame.display.update()
-
