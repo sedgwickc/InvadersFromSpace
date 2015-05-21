@@ -55,8 +55,9 @@ class InvadersGame( ):
     moveRight = False
     moveLeft = False
 
+    mothership = 0
     mother_pos = 0
-    mothership = False
+    motherActive = False
     
     player_score = 0
     game_over = False
@@ -98,10 +99,10 @@ class InvadersGame( ):
 
         # create mothership sprite
         self.mothership_grp = pygame.sprite.Group()
-        mothership = mothershipClass.MothershipSprite( 0, 30 )
-        self.mothership_grp.add( mothership )
         self.mother_pos = 0
-        self.mothership = False
+        self.mothership = mothershipClass.MothershipSprite( self.mother_pos, 30 )
+        self.mothership_grp.add( self.mothership )
+        self.motherActive = False
 
     def moveTurretRight(self):
         self.turr_dir = self.TURR_RIGHT
@@ -161,14 +162,17 @@ class InvadersGame( ):
         t_bull = bulletClass.BulletSprite( self.turret.rect.midtop[0], self.TURR_Y )
         self.t_bullGrp.add( t_bull )
 
-    def activateMothership(self):
-        self.mothership == True
-
     def moveInvaders(self):
         self.moveInv = True
 
-    def motherActive(self):
-        return self.mothership
+    def mothershipActivate(self):
+        self.motherActive = True
+
+    def mothershipStatus(self):
+        return self.motherActive
+
+    def getScore(self):
+        return self.player_score
 
     def update(self, surface):
         
@@ -185,12 +189,12 @@ class InvadersGame( ):
                 inv_spr.rect.y += 5
             self.moveInv = False 
 
-        if self.mothership == True and len( self.mothership_grp ) > 0:
-            self.mother_pos += 1
+        if self.motherActive == True and len( self.mothership_grp ) > 0:
+            self.mother_pos += 3
             self.mothership_grp.update( self.mother_pos )
-            if mother_pos >= WIN_X:
+            if self.mother_pos >= self.WIN_X:
                 self.mother_pos = 0
-                self.mothership = False
+                self.motherActive = False
 
         # randomly select an invader index and have that invader fire
 
