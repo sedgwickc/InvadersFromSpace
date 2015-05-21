@@ -37,6 +37,7 @@ def main():
     text_livesRect.topright = windowSurface.get_rect().topright
 
     invader_interval = inv_game.getInvInterval()
+    inv_fire_interval = inv_game.getInvFireInterval()
     USEREVENT_INV_DOWN = USEREVENT + 1
     USEREVENT_MOTHERSHIP = USEREVENT_INV_DOWN + 1
 
@@ -79,7 +80,11 @@ def main():
                 inv_game.moveInvaders()
             if event.type == USEREVENT_MOTHERSHIP:
                 inv_game.mothershipActivate()
-        
+       
+        ticks = pygame.time.get_ticks()
+        if ticks % inv_fire_interval == 0:
+            inv_game.fireInvader()
+
         inv_game.update( windowSurface )
 
         # update score
@@ -95,6 +100,7 @@ def main():
         inv_game.getShelters().draw( windowSurface )
         inv_game.getInvaders().draw( windowSurface )
         inv_game.getTurretBullets().draw( windowSurface )
+        inv_game.getInvBullets().draw( windowSurface )
         inv_game.getTurret().draw( windowSurface )
         mothershipStatus = inv_game.mothershipStatus()
         if mothershipStatus == True:
