@@ -32,33 +32,18 @@ def main():
 
     # set up font and text for lives and score count
     basicFont = pygame.font.SysFont( None, 25 )
-    text_lives = basicFont.render( 'LIVES', True, WHITE, BLACK )
-    text_livesRect = text_lives.get_rect()
-    text_livesRect.topright = windowSurface.get_rect().topright
 
-    invader_interval = inv_game.getInvInterval()
+    inv_move_interval = inv_game.getInvMoveInterval()
     inv_fire_interval = inv_game.getInvFireInterval()
     USEREVENT_INV_DOWN = USEREVENT + 1
     USEREVENT_MOTHERSHIP = USEREVENT_INV_DOWN + 1
 
-    pygame.time.set_timer( USEREVENT_INV_DOWN, invader_interval )
+    pygame.time.set_timer( USEREVENT_INV_DOWN, inv_game.inv_move_interval )
     pygame.time.set_timer( USEREVENT_MOTHERSHIP, random.randint(6000, 10000) )
 
     # run the game loop
     while True:
 
-        # if all shelters destroyed then user is told game is over and script exits
-        if len( inv_game.getShelters() ) == 0 or inv_game.getGameOver() == True:
-            basicFont = pygame.font.SysFont( None, 55 )
-            text_over = basicFont.render( 'GAME OVER', True, RED, BLACK )
-            text_overRect = text_over.get_rect()
-            text_overRect.center = windowSurface.get_rect().center
-            windowSurface.blit( text_over, text_overRect )
-            pygame.display.update()
-            time.sleep(5)
-            pygame.quit()
-            sys.exit()
-        
         # handle events
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -78,8 +63,10 @@ def main():
                     inv_game.stopTurret()
             if event.type == USEREVENT_INV_DOWN:
                 inv_game.moveInvaders()
+                pygame.time.set_timer( USEREVENT_INV_DOWN, inv_game.inv_move_interval )
             if event.type == USEREVENT_MOTHERSHIP:
                 inv_game.mothershipActivate()
+                pygame.time.set_timer( USEREVENT_MOTHERSHIP, random.randint(6000, 10000) )
        
         ticks = pygame.time.get_ticks()
         if ticks % inv_fire_interval == 0:
@@ -92,6 +79,11 @@ def main():
         text_score = basicFont.render( 'SCORE: ' + str( score ), True, WHITE, BLACK )
         text_scoreRect = text_score.get_rect()
         text_scoreRect.topleft = windowSurface.get_rect().topleft
+
+        lives = inv_game.getLives()
+        text_lives = basicFont.render( 'LIVES: ' + str( lives ), True, WHITE, BLACK )
+        text_livesRect = text_lives.get_rect()
+        text_livesRect.topright = windowSurface.get_rect().topright
 
         # draw frame
         windowSurface.fill( BLACK )
@@ -106,6 +98,17 @@ def main():
         if mothershipStatus == True:
             inv_game.getMothership().draw( windowSurface )
 
+        if inv_game.getGameOver() == True:
+            basicFont = pygame.font.SysFont( None, 55 )
+            text_over = basicFont.render( 'GAME OVER', True, RED, BLACK )
+            text_overRect = text_over.get_rect()
+            text_overRect.center = windowSurface.get_rect().center
+            windowSurface.blit( text_over, text_overRect )
+            pygame.display.update()
+            time.sleep(5)
+            pygame.quit()
+            sys.exit()
+        
         time.sleep( inv_game.getFrameDelay() )
         # refresh display with new frame
         pygame.display.update()

@@ -26,6 +26,6 @@ class BulletSprite( pygame.sprite.Sprite ):
         if self.SHOOTER == 'inv':
             self.CUR_Y += 3
         if self.SHOOTER == 'tur':
-            self.CUR_Y -= 3
+            self.CUR_Y -= 6
         self.rect.y = self.CUR_Y
         self.rect.x = self.CUR_X

@@ -1,13 +1,15 @@
 import pygame, sys
 
 RES_DIR = 'resources/'
-ALIEN_IMGS = [ 'alien_1.png', 'alien_2.png', 'alien_3.png', 'alien_4.png', 'alien_5.png' ]
-DAMAGE = [ 10, 20, 30, 40, 50 ]
+ALIEN_IMGS = [ 'alien_5.png', 'alien_4.png', 'alien_3.png', 'alien_1.png', 'alien_1.png' ]
+DAMAGE = [ 40, 30, 20, 10, 10 ]
+EXPLODE_IMG = 'explosion_inv.jpg'
 
 class InvadersSprite( pygame.sprite.Sprite ):
     
     alien_type = 0    
     damage = 0
+    alive = True
 
     def __init__( self, inv_type, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -24,6 +26,14 @@ class InvadersSprite( pygame.sprite.Sprite ):
         self.image = self.src_image
         self.rect.x = x
         self.rect.y = y
+        self.alive = True
+    
+    def isAlive(self):
+        return self.alive
+
+    def explode(self):
+        self.image = pygame.image.load( RES_DIR + EXPLODE_IMG )
+        self.alive = False
 
     def update(self):
         self.rect = self.image.get_rect()

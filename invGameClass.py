@@ -15,8 +15,14 @@ class InvadersGame( ):
     INV_LEFT = 175
     INV_TOP = 50
     INV_MAX = 55
-    INV_INTERVAL = 1000
+    INV_MOVE_INTERVAL = 1000
     INV_FIRE_INTERVAL = 500
+    INV_ALL = 55
+    INV_MOST = 41
+    INV_HALF = 26
+    INV_SOME = 13
+    INV_FEW = 5
+
 
     # turrent variables
     TURR_X = 400
@@ -50,6 +56,8 @@ class InvadersGame( ):
 
     moveInv = False
     inv_fire_interval = INV_FIRE_INTERVAL
+    inv_move_interval = INV_MOVE_INTERVAL
+    num_inv = 0
 
     turret = 0
 
@@ -87,6 +95,7 @@ class InvadersGame( ):
                 cur_left += 40
             cur_top += 30
         self.moveInv = False
+        self.num_inv = self.INV_ALL
 
         # create invader bullet group
         self.inv_bullGrp = pygame.sprite.Group()
@@ -136,11 +145,139 @@ class InvadersGame( ):
         else:
             return False
 
+    def fireTurret(self):
+        t_bull = bulletClass.BulletSprite( self.turret.rect.midtop[0], self.TURR_Y, 'tur' )
+        self.t_bullGrp.add( t_bull )
+
+    def fireInvader( self ):
+        # randomly select an invader index and have that invader fire
+        inv_list = self.invaders.sprites()
+        inv_idx = random.randint( 0, len( inv_list ) - 1 )
+        inv_bull = bulletClass.BulletSprite( inv_list[inv_idx].rect.x, inv_list[inv_idx].rect.y, 'inv' )
+        self.inv_bullGrp.add( inv_bull )
+    
+    def getInvFireInterval(self):
+        return self.inv_fire_interval
+
+    def setInvFireInterval(self, new_interval):
+        self.inv_fire_interval = new_interval
+
+    def moveInvaders(self):
+        self.moveInv = True
+
+    def mothershipActivate(self):
+        self.motherActive = True
+
+    def mothershipStatus(self):
+        return self.motherActive
+
+    def update(self, surface):
+        shelt_list = self.shelters.sprites()
+        inv_list = self.invaders.sprites()
+        mthr_list = self.mothership_grp.sprites()
+        turret_list = self.turret_grp.sprites()
+        winSurface = surface
+        inv_count = len( inv_list )
+        # if all shelters destroyed then user is told game is over and update
+        # returns
+        if len( self.shelters ) == 0:
+            self.game_over = True
+            return
+
+        # remove dead invaders and check if any have reached the shelters
+        if inv_count > 0:
+            for inv in inv_list:
+                if inv.isAlive() == False:
+                    self.invaders.remove( inv )
+                    continue
+                inv_idx = inv.rect.collidelist( shelt_list )
+                if inv_idx != self.NO_COLLISION:
+                    self.game_over = True
+                    return
+
+        self.turret_grp.update( self.turr_dir )
+
+        if inv_count < self.num_inv:
+            # update interval between invader moves
+            if inv_count <= self.INV_MOST and inv_count > self.INV_HALF:
+                self.inv_move_interval = 800
+            elif inv_count <= self.INV_HALF and inv_count > self.INV_SOME:
+                self.inv_move_interval = 600
+            elif inv_count <= self.INV_SOME and inv_count > self.INV_FEW:
+                self.inv_move_interval = 400
+            elif inv_count <= self.INV_FEW and inv_count > 5:
+                self.inv_move_interval = 200
+            self.num_inv = inv_count
+
+        # move invaders
+        if self.moveInv == True: 
+            for inv_spr in iter( self.invaders ):
+                inv_spr.rect.y += 5
+            self.moveInv = False 
+
+        # move mothership if it is still in window
+        if self.motherActive == True :
+            if len( self.mothership_grp ) == 0:
+                self.mother_pos = 0
+                self.mothership_grp.add( self.mothership )
+            else:
+                self.mother_pos += 3
+                self.mothership_grp.update( self.mother_pos )
+                if self.mother_pos >= self.WIN_X:
+                    self.mother_pos = 0
+                    self.motherActive = False
+
+        # if there were bullets on screen in last frame by then remove the bullets
+        # that have left the screen and call the update method of the others
+        if len( self.t_bullGrp ) > 0:
+            for bull in iter( self.t_bullGrp ):
+                if not winSurface.get_rect().contains( bull ):
+                    self.t_bullGrp.remove( bull )
+                # check if any turret bullets intersect with invaders
+                for idx in bull.rect.collidelistall( inv_list ):
+                    self.t_bullGrp.remove( bull )
+                    inv_list[idx].explode()
+                    self.player_score += inv_list[idx].damage
+                # check if bullet intersects with the mothership
+                mthr_idx = bull.rect.collidelist( mthr_list )
+                if mthr_idx != self.NO_COLLISION:
+                    self.t_bullGrp.remove( bull )
+                    self.mothership_grp.remove( mthr_list[mthr_idx] )
+                    self.motherActive = False
+                    self.player_score += mthr_list[mthr_idx].damage
+                # check if any turret bullets intersert with shelters
+                for idx in bull.rect.collidelistall( shelt_list ): 
+                    self.t_bullGrp.remove( bull )
+                    shelt_list[idx].update(bull.DAMAGE)
+                    if shelt_list[idx].HEALTH == 0:
+                        self.shelters.remove( shelt_list[idx] )
+            self.t_bullGrp.update()
+        
+        # check state of bullets fired by invaders and update them
+        if len( self.inv_bullGrp ) > 0:
+            for bull in iter( self.inv_bullGrp ):
+                if not winSurface.get_rect().contains( bull ):
+                    self.inv_bullGrp.remove( bull )
+                # check if any invader bullets intersect with the turret
+                for idx in bull.rect.collidelistall( turret_list ):
+                    self.inv_bullGrp.remove( bull )
+                    self.player_lives -= 1
+                    if self.player_lives == 0:
+                        self.game_over = True
+                        return
+                # check if any invader bullets intersert with shelters
+                for idx in bull.rect.collidelistall( shelt_list ): 
+                    self.inv_bullGrp.remove( bull )
+                    shelt_list[idx].update(bull.DAMAGE)
+                    if shelt_list[idx].HEALTH == 0:
+                        self.shelters.remove( shelt_list[idx] )
+            self.inv_bullGrp.update()
+        
     def getSurfDim(self):
         return self.surfaceSize
 
-    def getInvInterval(self):
-        return self.INV_INTERVAL
+    def getInvMoveInterval(self):
+        return self.INV_MOVE_INTERVAL
 
     def getTurret(self):
         return self.turret_grp
@@ -166,107 +303,8 @@ class InvadersGame( ):
     def getFrameDelay(self):
         return self.frameDelay
 
-    def fireTurret(self):
-        t_bull = bulletClass.BulletSprite( self.turret.rect.midtop[0], self.TURR_Y, 'tur' )
-        self.t_bullGrp.add( t_bull )
-    def fireInvader( self ):
-        # randomly select an invader index and have that invader fire
-        inv_list = self.invaders.sprites()
-        inv_idx = random.randint( 0, len( inv_list ) - 1 )
-        inv_bull = bulletClass.BulletSprite( inv_list[inv_idx].rect.x, inv_list[inv_idx].rect.y, 'inv' )
-        self.inv_bullGrp.add( inv_bull )
-    
-    def getInvFireInterval(self):
-        return self.inv_fire_interval
-
-    def setInvFireInterval(self, new_interval):
-        self.inv_fire_interval = new_interval
-
-    def moveInvaders(self):
-        self.moveInv = True
-
-    def mothershipActivate(self):
-        self.motherActive = True
-
-    def mothershipStatus(self):
-        return self.motherActive
-
     def getScore(self):
         return self.player_score
 
-    def update(self, surface):
-        
-        shelt_list = self.shelters.sprites()
-        inv_list = self.invaders.sprites()
-        mthr_list = self.mothership_grp.sprites()
-        turret_list = self.turret_grp.sprites()
-        winSurface = surface
-        # if all shelters destroyed then user is told game is over and update
-        # returns
-        if len( self.shelters ) == 0:
-            text_overRect.center = self.winSurface.get_rect().center
-            self.game_over = True
-
-        self.turret_grp.update( self.turr_dir )
-
-        if self.moveInv == True: 
-            for inv_spr in iter( self.invaders ):
-                inv_spr.rect.y += 5
-            self.moveInv = False 
-
-        if self.motherActive == True and len( self.mothership_grp ) > 0:
-            self.mother_pos += 3
-            self.mothership_grp.update( self.mother_pos )
-            if self.mother_pos >= self.WIN_X:
-                self.mother_pos = 0
-                self.motherActive = False
-
-        # if there were bullets on screen in last frame by then remove the bullets
-        # that have left the screen and call the update method of the others
-        if len( self.t_bullGrp ) > 0:
-            for bull in iter( self.t_bullGrp ):
-                if not winSurface.get_rect().contains( bull ):
-                    self.t_bullGrp.remove( bull )
-                # check if any turret bullets intersect with invaders
-                for idx in bull.rect.collidelistall( inv_list ):
-                    self.t_bullGrp.remove( bull )
-                    self.invaders.remove( inv_list[idx] )
-                    self.player_score += 10
-                # check if bullet intersects with the mothership
-                mthr_idx = bull.rect.collidelist( mthr_list )
-                if mthr_idx != self.NO_COLLISION:
-                    self.t_bullGrp.remove( bull )
-                    self.mothership_grp.remove( mthr_list[mthr_idx] )
-                    self.player_score += 100
-                # check if any turret bullets intersert with shelters
-                for idx in bull.rect.collidelistall( shelt_list ): 
-                    self.t_bullGrp.remove( bull )
-                    shelt_list[idx].update(bull.DAMAGE)
-                    if shelt_list[idx].HEALTH == 0:
-                        self.shelters.remove( shelt_list[idx] )
-            self.t_bullGrp.update()
-        
-        if len( self.inv_bullGrp ) > 0:
-            for bull in iter( self.inv_bullGrp ):
-                if not winSurface.get_rect().contains( bull ):
-                    self.inv_bullGrp.remove( bull )
-                # check if any invader bullets intersect with the turret
-                for idx in bull.rect.collidelistall( turret_list ):
-                    self.inv_bullGrp.remove( bull )
-                    self.player_lives -= 1
-                    if self.player_lives == 0:
-                        self.game_over = True
-                # check if any invader bullets intersert with shelters
-                for idx in bull.rect.collidelistall( shelt_list ): 
-                    self.inv_bullGrp.remove( bull )
-                    shelt_list[idx].update(bull.DAMAGE)
-                    if shelt_list[idx].HEALTH == 0:
-                        self.shelters.remove( shelt_list[idx] )
-            self.inv_bullGrp.update()
-
-        # check in invaders have reached the shelters
-        if len( inv_list ) > 0:
-            for inv in inv_list:
-                inv_idx = inv.rect.collidelist( shelt_list )
-                if inv_idx != self.NO_COLLISION:
-                    self.game_over = True
+    def getLives(self):
+        return self.player_lives

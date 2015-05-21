@@ -7,6 +7,7 @@ class MothershipSprite( pygame.sprite.Sprite ):
 
     START_Y = 30
     START_X = 0
+    damage = 100
 
     def __init__( self, start_x, start_y):
         pygame.sprite.Sprite.__init__(self)
