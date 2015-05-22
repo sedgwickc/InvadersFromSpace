@@ -4,7 +4,9 @@ import invadersClass, turretClass, mothershipClass, shelterClass, bulletClass
 # allows the use of pygame functions without the module suffix
 from pygame.locals import *
 
-class InvadersGame( ):
+class InvadersGame():
+    #  class attributes
+
     # Window variables
     WIN_X = 800
     WIN_Y = 600
@@ -13,7 +15,7 @@ class InvadersGame( ):
     INV_ROW = 5
     INV_COL = 11
     INV_LEFT = 175
-    INV_TOP = 50
+    INV_TOP = 75
     INV_MAX = 55
     INV_MOVE_INTERVAL = 1000
     INV_FIRE_INTERVAL = 500
@@ -22,7 +24,8 @@ class InvadersGame( ):
     INV_HALF = 26
     INV_SOME = 13
     INV_FEW = 5
-
+    INV_X_MAX = 100
+    INV_X_MIN = 700
 
     # turrent variables
     TURR_X = 400
@@ -43,38 +46,32 @@ class InvadersGame( ):
 
     NO_COLLISION = -1
 
-    # Set window size, title, and frame delay
-    surfaceSize = (WIN_X, WIN_Y)
-    frameDelay = 0.005
-
-    shelters = []
-    invaders = []
-    turret_grp = []
-    t_bullGrp = []
-    inv_bullGrp = []
-    mothership_grp = []
-
-    moveInv = False
-    inv_fire_interval = INV_FIRE_INTERVAL
-    inv_move_interval = INV_MOVE_INTERVAL
-    num_inv = 0
-
-    turret = 0
-
-    turr_pos = TURR_X
-    turr_dir = TURR_STOP
-    moveRight = False
-    moveLeft = False
-
-    mothership = 0
-    mother_pos = 0
-    motherActive = False
-    
-    player_lives = 3
-    player_score = 0
-    game_over = False
-
     def __init__( self ):
+        # intialize instance attributes
+
+        # Set window size, title, and frame delay
+        self.surfaceSize = (self.WIN_X, self.WIN_Y)
+        self.frameDelay = 0.005
+
+        self.inv_fire_interval = self.INV_FIRE_INTERVAL
+        self.inv_move_interval = self.INV_MOVE_INTERVAL
+        self.inv_right = True
+        self.inv_left = False
+        self.inv_down = False
+        self.num_inv = 0
+        self.inv_x = 50
+
+        self.turr_pos = self.TURR_X
+        self.turr_dir = self.TURR_STOP
+
+        self.mother_x = 0
+        self.motherActive = False
+        
+        self.player_lives = 3
+        self.player_score = 0
+        self.game_over = False
+        self.player_win = False
+        
         # create bunkers
         self.shelters = pygame.sprite.Group()
         cur_x = self.SHELT_X
@@ -113,8 +110,8 @@ class InvadersGame( ):
 
         # create mothership sprite
         self.mothership_grp = pygame.sprite.Group()
-        self.mother_pos = 0
-        self.mothership = mothershipClass.MothershipSprite( self.mother_pos, 30 )
+        self.mother_x = 0
+        self.mothership = mothershipClass.MothershipSprite( self.mother_x )
         self.mothership_grp.add( self.mothership )
         self.motherActive = False
 
@@ -182,6 +179,7 @@ class InvadersGame( ):
         # returns
         if len( self.shelters ) == 0:
             self.game_over = True
+            self.player_win = False
             return
 
         # remove dead invaders and check if any have reached the shelters
@@ -193,38 +191,72 @@ class InvadersGame( ):
                 inv_idx = inv.rect.collidelist( shelt_list )
                 if inv_idx != self.NO_COLLISION:
                     self.game_over = True
+                    self.player_win = False
                     return
+        else:
+            self.game_over = True
+            self.player_win = True
+            return
 
         self.turret_grp.update( self.turr_dir )
 
         if inv_count < self.num_inv:
             # update interval between invader moves
             if inv_count <= self.INV_MOST and inv_count > self.INV_HALF:
-                self.inv_move_interval = 800
+                self.inv_move_interval = 500
             elif inv_count <= self.INV_HALF and inv_count > self.INV_SOME:
-                self.inv_move_interval = 600
-            elif inv_count <= self.INV_SOME and inv_count > self.INV_FEW:
                 self.inv_move_interval = 400
-            elif inv_count <= self.INV_FEW and inv_count > 5:
+            elif inv_count <= self.INV_SOME and inv_count > self.INV_FEW:
                 self.inv_move_interval = 200
+            elif inv_count <= self.INV_FEW and inv_count > 5:
+                self.inv_move_interval = 100
+            elif inv_count <= 5:
+                self.inv_move_interval = 50
             self.num_inv = inv_count
 
         # move invaders
         if self.moveInv == True: 
-            for inv_spr in iter( self.invaders ):
-                inv_spr.rect.y += 5
+            if self.inv_down == True:
+                for inv_spr in iter( self.invaders ):
+                    inv_spr.rect.y += 10
+                self.inv_down = False
+                if self.inv_x  > 0:
+                    self.inv_right = True
+                    self.inv_left = False
+                if self.inv_x <= 0:
+                    self.inv_right = False
+                    self.inv_left = True
+            elif self.inv_left == True:
+                for inv_spr in iter( self.invaders ):
+                    inv_spr.rect.x -= 10
+                self.inv_x -= 10
+                if self.inv_x < -100:
+                    self.inv_left = False
+                    self.inv_right = False
+                    self.inv_down = True
+                    self.inv_x = 1
+            elif self.inv_right == True:
+                for inv_spr in iter( self.invaders ):
+                    inv_spr.rect.x += 10
+                self.inv_x += 10
+                if self.inv_x > 100:
+                    self.inv_left = False
+                    self.inv_right = False
+                    self.inv_down = True
+                    self.inv_x = 0
             self.moveInv = False 
 
         # move mothership if it is still in window
         if self.motherActive == True :
             if len( self.mothership_grp ) == 0:
-                self.mother_pos = 0
+                self.mother_x = 0
+                self.mothership.setPosition( self.mother_x )
                 self.mothership_grp.add( self.mothership )
             else:
-                self.mother_pos += 3
-                self.mothership_grp.update( self.mother_pos )
-                if self.mother_pos >= self.WIN_X:
-                    self.mother_pos = 0
+                self.mother_x += 3
+                self.mothership_grp.update( self.mother_x )
+                if self.mother_x >= self.WIN_X:
+                    self.mother_x = 0
                     self.motherActive = False
 
         # if there were bullets on screen in last frame by then remove the bullets
@@ -244,12 +276,12 @@ class InvadersGame( ):
                     self.t_bullGrp.remove( bull )
                     self.mothership_grp.remove( mthr_list[mthr_idx] )
                     self.motherActive = False
-                    self.player_score += mthr_list[mthr_idx].damage
+                    self.player_score += mothershipClass.MothershipSprite.DAMAGE
                 # check if any turret bullets intersert with shelters
                 for idx in bull.rect.collidelistall( shelt_list ): 
                     self.t_bullGrp.remove( bull )
                     shelt_list[idx].update(bull.DAMAGE)
-                    if shelt_list[idx].HEALTH == 0:
+                    if shelt_list[idx].health == 0:
                         self.shelters.remove( shelt_list[idx] )
             self.t_bullGrp.update()
         
@@ -264,12 +296,13 @@ class InvadersGame( ):
                     self.player_lives -= 1
                     if self.player_lives == 0:
                         self.game_over = True
+                        self.player_win = False
                         return
                 # check if any invader bullets intersert with shelters
                 for idx in bull.rect.collidelistall( shelt_list ): 
                     self.inv_bullGrp.remove( bull )
                     shelt_list[idx].update(bull.DAMAGE)
-                    if shelt_list[idx].HEALTH == 0:
+                    if shelt_list[idx].health == 0:
                         self.shelters.remove( shelt_list[idx] )
             self.inv_bullGrp.update()
         
@@ -299,6 +332,9 @@ class InvadersGame( ):
 
     def getGameOver(self):
         return self.game_over
+
+    def playerWon(self):
+        return self.player_win
 
     def getFrameDelay(self):
         return self.frameDelay

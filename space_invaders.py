@@ -100,7 +100,10 @@ def main():
 
         if inv_game.getGameOver() == True:
             basicFont = pygame.font.SysFont( None, 55 )
-            text_over = basicFont.render( 'GAME OVER', True, RED, BLACK )
+            if inv_game.playerWon == False:
+                text_over = basicFont.render( 'DEFEATED', True, RED, BLACK )
+            else:
+                text_over = basicFont.render( 'VICTORY', True, BLUE, BLACK )
             text_overRect = text_over.get_rect()
             text_overRect.center = windowSurface.get_rect().center
             windowSurface.blit( text_over, text_overRect )
