@@ -24,8 +24,6 @@ class InvadersGame():
     INV_HALF = 26
     INV_SOME = 13
     INV_FEW = 5
-    INV_X_MAX = 100
-    INV_X_MIN = 700
 
     # turrent variables
     TURR_X = 400
@@ -59,7 +57,7 @@ class InvadersGame():
         self.inv_left = False
         self.inv_down = False
         self.num_inv = 0
-        self.inv_x = 50
+        self.inv_x = 75
 
         self.turr_pos = self.TURR_X
         self.turr_dir = self.TURR_STOP
@@ -230,7 +228,7 @@ class InvadersGame():
                 for inv_spr in iter( self.invaders ):
                     inv_spr.rect.x -= 10
                 self.inv_x -= 10
-                if self.inv_x < -100:
+                if self.inv_x < -150:
                     self.inv_left = False
                     self.inv_right = False
                     self.inv_down = True
@@ -239,7 +237,7 @@ class InvadersGame():
                 for inv_spr in iter( self.invaders ):
                     inv_spr.rect.x += 10
                 self.inv_x += 10
-                if self.inv_x > 100:
+                if self.inv_x > 150:
                     self.inv_left = False
                     self.inv_right = False
                     self.inv_down = True
