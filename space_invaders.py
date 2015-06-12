@@ -1,7 +1,7 @@
 '''
 Charles Sedgwick
 Invaders From Space
-This script implements a game similar to space invaders using the spaceInvClass
+This script implements a game similar to space invaders using the InvadersGame Class
 '''
 
 import pygame, sys, random, time
@@ -16,6 +16,9 @@ WHITE = ( 255, 255, 255 )
 RED = ( 255, 0, 0, )
 GREEN = ( 0, 255, 0 )
 BLUE = ( 0, 0, 255 )
+
+SIX_SECONDS = 6000
+TEN_SECONDS = 10000
 
 def main():
 
@@ -39,7 +42,7 @@ def main():
     USEREVENT_MOTHERSHIP = USEREVENT_INV_DOWN + 1
 
     pygame.time.set_timer( USEREVENT_INV_DOWN, inv_game.inv_move_interval )
-    pygame.time.set_timer( USEREVENT_MOTHERSHIP, random.randint(6000, 10000) )
+    pygame.time.set_timer( USEREVENT_MOTHERSHIP, random.randint(SIX_SECONDS, TEN_SECONDS) )
 
     # run the game loop
     while True:
@@ -66,54 +69,49 @@ def main():
                 pygame.time.set_timer( USEREVENT_INV_DOWN, inv_game.inv_move_interval )
             if event.type == USEREVENT_MOTHERSHIP:
                 inv_game.mothershipActivate()
-                pygame.time.set_timer( USEREVENT_MOTHERSHIP, random.randint(6000, 10000) )
+                pygame.time.set_timer( USEREVENT_MOTHERSHIP, random.randint(SIX_SECONDS, TEN_SECONDS) )
        
-        ticks = pygame.time.get_ticks()
-        if ticks % inv_fire_interval == 0:
-            inv_game.fireInvader()
-
         inv_game.update( windowSurface )
 
-        # update score
-        score = inv_game.getScore()
-        text_score = basicFont.render( 'SCORE: ' + str( score ), True, WHITE, BLACK )
-        text_scoreRect = text_score.get_rect()
-        text_scoreRect.topleft = windowSurface.get_rect().topleft
-
-        lives = inv_game.getLives()
-        text_lives = basicFont.render( 'LIVES: ' + str( lives ), True, WHITE, BLACK )
-        text_livesRect = text_lives.get_rect()
-        text_livesRect.topright = windowSurface.get_rect().topright
-
-        # draw frame
-        windowSurface.fill( BLACK )
-        windowSurface.blit( text_lives, text_livesRect )
-        windowSurface.blit( text_score, text_scoreRect )
-        inv_game.getShelters().draw( windowSurface )
-        inv_game.getInvaders().draw( windowSurface )
-        inv_game.getTurretBullets().draw( windowSurface )
-        inv_game.getInvBullets().draw( windowSurface )
-        inv_game.getTurret().draw( windowSurface )
-        mothershipStatus = inv_game.mothershipStatus()
-        if mothershipStatus == True:
-            inv_game.getMothership().draw( windowSurface )
-
         if inv_game.getGameOver() == True:
-            basicFont = pygame.font.SysFont( None, 55 )
-            if inv_game.playerWon == False:
-                text_over = basicFont.render( 'YOU LOSE!', True, RED, BLACK )
+            endFont = pygame.font.SysFont( None, 55 )
+            if inv_game.playerWon() == False:
+                text_over = endFont.render( 'YOU LOSE!', True, RED, BLACK )
             else:
-                text_over = basicFont.render( 'YOU WIN!', True, BLUE, BLACK )
+                text_over = endFont.render( 'YOU WIN!', True, BLUE, BLACK )
             text_overRect = text_over.get_rect()
             text_overRect.center = windowSurface.get_rect().center
             windowSurface.blit( text_over, text_overRect )
-            pygame.display.update()
-            time.sleep(5)
-            pygame.quit()
-            sys.exit()
+        else:
+            ticks = pygame.time.get_ticks()
+            if ticks % inv_fire_interval == 0:
+                inv_game.fireInvader()
+
+            # update score
+            score = inv_game.getScore()
+            text_score = basicFont.render( 'SCORE: ' + str( score ), True, WHITE, BLACK )
+            text_scoreRect = text_score.get_rect()
+            text_scoreRect.topleft = windowSurface.get_rect().topleft
+
+            lives = inv_game.getLives()
+            text_lives = basicFont.render( 'LIVES: ' + str( lives ), True, WHITE, BLACK )
+            text_livesRect = text_lives.get_rect()
+            text_livesRect.topright = windowSurface.get_rect().topright
+
+            # draw frame
+            windowSurface.fill( BLACK )
+            windowSurface.blit( text_lives, text_livesRect )
+            windowSurface.blit( text_score, text_scoreRect )
+            inv_game.getShelters().draw( windowSurface )
+            inv_game.getInvaders().draw( windowSurface )
+            inv_game.getTurretBullets().draw( windowSurface )
+            inv_game.getInvBullets().draw( windowSurface )
+            inv_game.getTurret().draw( windowSurface )
+            mothershipStatus = inv_game.mothershipStatus()
+            if mothershipStatus == True:
+                inv_game.getMothership().draw( windowSurface )
         
         time.sleep( inv_game.getFrameDelay() )
-        # refresh display with new frame
         pygame.display.update()
 
 main()

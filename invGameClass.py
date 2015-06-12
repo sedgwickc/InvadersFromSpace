@@ -11,6 +11,8 @@ class InvadersGame():
     WIN_X = 800
     WIN_Y = 600
 
+    FRAME_DELAY = 0.01
+
     # Invader variables
     INV_ROW = 5
     INV_COL = 11
@@ -48,19 +50,19 @@ class InvadersGame():
         # intialize instance attributes
 
         # Set window size, title, and frame delay
-        self.surfaceSize = (self.WIN_X, self.WIN_Y)
-        self.frameDelay = 0.005
+        self.surfaceSize = (InvadersGame.WIN_X, InvadersGame.WIN_Y)
+        self.frameDelay = InvadersGame.FRAME_DELAY
 
-        self.inv_fire_interval = self.INV_FIRE_INTERVAL
-        self.inv_move_interval = self.INV_MOVE_INTERVAL
+        self.inv_fire_interval = InvadersGame.INV_FIRE_INTERVAL
+        self.inv_move_interval = InvadersGame.INV_MOVE_INTERVAL
         self.inv_right = True
         self.inv_left = False
         self.inv_down = False
         self.num_inv = 0
         self.inv_x = 75
 
-        self.turr_pos = self.TURR_X
-        self.turr_dir = self.TURR_STOP
+        self.turr_pos = InvadersGame.TURR_X
+        self.turr_dir = InvadersGame.TURR_STOP
 
         self.mother_x = 0
         self.motherActive = False
@@ -72,34 +74,34 @@ class InvadersGame():
         
         # create bunkers
         self.shelters = pygame.sprite.Group()
-        cur_x = self.SHELT_X
-        for i in range( 0, self.SHELT_NUM ):
-            cur_shelt = shelterClass.ShelterSprite( cur_x, self.SHELT_Y )
+        cur_x = InvadersGame.SHELT_X
+        for i in range( 0, InvadersGame.SHELT_NUM ):
+            cur_shelt = shelterClass.ShelterSprite( cur_x, InvadersGame.SHELT_Y )
             self.shelters.add( cur_shelt )
-            cur_x += self.SHELT_DST
+            cur_x += InvadersGame.SHELT_DST
 
         # create invader sprites
         self.invaders = pygame.sprite.Group()
-        cur_top = self.INV_TOP
-        for j in range ( 0, self.INV_ROW ):
-            cur_left = self.INV_LEFT
+        cur_top = InvadersGame.INV_TOP
+        for j in range ( 0, InvadersGame.INV_ROW ):
+            cur_left = InvadersGame.INV_LEFT
             inv_row = []
-            for i in range( 0, self.INV_COL ):
+            for i in range( 0, InvadersGame.INV_COL ):
                 cur_sprite = invadersClass.InvadersSprite(j, cur_left, cur_top )
                 self.invaders.add( cur_sprite )
                 cur_left += 40
             cur_top += 30
         self.moveInv = False
-        self.num_inv = self.INV_ALL
+        self.num_inv = InvadersGame.INV_ALL
 
         # create invader bullet group
         self.inv_bullGrp = pygame.sprite.Group()
 
         # create turret sprite
         self.turret_grp = pygame.sprite.Group()
-        self.turret = turretClass.TurretSprite( (self.TURR_X, self.TURR_Y), (self.WIN_X, self.WIN_Y) )
+        self.turret = turretClass.TurretSprite( (InvadersGame.TURR_X, InvadersGame.TURR_Y), (InvadersGame.WIN_X, InvadersGame.WIN_Y) )
         self.turret_grp.add( self.turret )
-        self.turr_pos = self.TURR_X
+        self.turr_pos = InvadersGame.TURR_X
         self.moveRight = False
         self.moveLeft = False
 
@@ -114,34 +116,34 @@ class InvadersGame():
         self.motherActive = False
 
     def moveTurretRight(self):
-        self.turr_dir = self.TURR_RIGHT
+        self.turr_dir = InvadersGame.TURR_RIGHT
 
     def moveTurretLeft(self):
-        self.turr_dir = self.TURR_LEFT
+        self.turr_dir = InvadersGame.TURR_LEFT
 
     def stopTurret(self):
-        self.turr_dir = self.TURR_STOP
+        self.turr_dir = InvadersGame.TURR_STOP
 
     def turretMovingRight(self):
-        if self.turr_dir == self.TURR_RIGHT:
+        if self.turr_dir == InvadersGame.TURR_RIGHT:
             return True
         else:
             return False
 
     def turretMovingLeft(self):
-        if self.turr_dir == self.TURR_LEFT:
+        if self.turr_dir == InvadersGame.TURR_LEFT:
             return True
         else:
             return False
 
     def turretStopped(self):
-        if self.turr_dir == self.TURR_STOP:
+        if self.turr_dir == InvadersGame.TURR_STOP:
             return True
         else:
             return False
 
     def fireTurret(self):
-        t_bull = bulletClass.BulletSprite( self.turret.rect.midtop[0], self.TURR_Y, 'tur' )
+        t_bull = bulletClass.BulletSprite( self.turret.rect.midtop[0], InvadersGame.TURR_Y, 'tur' )
         self.t_bullGrp.add( t_bull )
 
     def fireInvader( self ):
@@ -152,7 +154,7 @@ class InvadersGame():
         self.inv_bullGrp.add( inv_bull )
     
     def getInvFireInterval(self):
-        return self.inv_fire_interval
+        return random.randint(1,self.inv_fire_interval)
 
     def setInvFireInterval(self, new_interval):
         self.inv_fire_interval = new_interval
@@ -173,6 +175,7 @@ class InvadersGame():
         turret_list = self.turret_grp.sprites()
         winSurface = surface
         inv_count = len( inv_list )
+        self.shelters.update()
         # if all shelters destroyed then user is told game is over and update
         # returns
         if len( self.shelters ) == 0:
@@ -200,14 +203,14 @@ class InvadersGame():
 
         if inv_count < self.num_inv:
             # update interval between invader moves
-            if inv_count <= self.INV_MOST and inv_count > self.INV_HALF:
-                self.inv_move_interval = 500
-            elif inv_count <= self.INV_HALF and inv_count > self.INV_SOME:
-                self.inv_move_interval = 400
-            elif inv_count <= self.INV_SOME and inv_count > self.INV_FEW:
+            if inv_count <= InvadersGame.INV_MOST and inv_count > InvadersGame.INV_HALF:
+                self.inv_move_interval = 300
+            elif inv_count <= InvadersGame.INV_HALF and inv_count > InvadersGame.INV_SOME:
                 self.inv_move_interval = 200
-            elif inv_count <= self.INV_FEW and inv_count > 5:
+            elif inv_count <= InvadersGame.INV_SOME and inv_count > InvadersGame.INV_FEW:
                 self.inv_move_interval = 100
+            elif inv_count <= InvadersGame.INV_FEW and inv_count > 5:
+                self.inv_move_interval = 75
             elif inv_count <= 5:
                 self.inv_move_interval = 50
             self.num_inv = inv_count
@@ -253,7 +256,7 @@ class InvadersGame():
             else:
                 self.mother_x += 3
                 self.mothership_grp.update( self.mother_x )
-                if self.mother_x >= self.WIN_X:
+                if self.mother_x >= InvadersGame.WIN_X:
                     self.mother_x = 0
                     self.motherActive = False
 
@@ -278,7 +281,7 @@ class InvadersGame():
                 # check if any turret bullets intersert with shelters
                 for idx in bull.rect.collidelistall( shelt_list ): 
                     self.t_bullGrp.remove( bull )
-                    shelt_list[idx].update(bull.DAMAGE)
+                    shelt_list[idx].hit(bull.DAMAGE)
                     if shelt_list[idx].health == 0:
                         self.shelters.remove( shelt_list[idx] )
             self.t_bullGrp.update()
@@ -291,6 +294,7 @@ class InvadersGame():
                 # check if any invader bullets intersect with the turret
                 for idx in bull.rect.collidelistall( turret_list ):
                     self.inv_bullGrp.remove( bull )
+                    turret_list[idx].explode()
                     self.player_lives -= 1
                     if self.player_lives == 0:
                         self.game_over = True
@@ -299,7 +303,7 @@ class InvadersGame():
                 # check if any invader bullets intersert with shelters
                 for idx in bull.rect.collidelistall( shelt_list ): 
                     self.inv_bullGrp.remove( bull )
-                    shelt_list[idx].update(bull.DAMAGE)
+                    shelt_list[idx].hit(bull.DAMAGE)
                     if shelt_list[idx].health == 0:
                         self.shelters.remove( shelt_list[idx] )
             self.inv_bullGrp.update()
@@ -308,7 +312,7 @@ class InvadersGame():
         return self.surfaceSize
 
     def getInvMoveInterval(self):
-        return self.INV_MOVE_INTERVAL
+        return self.inv_move_interval
 
     def getTurret(self):
         return self.turret_grp

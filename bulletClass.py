@@ -24,8 +24,8 @@ class BulletSprite( pygame.sprite.Sprite ):
     def update(self):
         self.rect = self.image.get_rect()
         if self.shooter == 'inv':
-            self.cur_y += 4
+            self.cur_y += 6
         else:
-            self.cur_y -= 8
+            self.cur_y -= 12
         self.rect.y = self.cur_y
         self.rect.x = self.cur_x
